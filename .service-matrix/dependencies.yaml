@@ -1,0 +1,39 @@
+# 服务矩阵 — 单一真相源（大仓 Monorepo 版）
+#
+# 说明：
+#   - 本文件是服务拓扑与代码路径的唯一真相源
+#   - 大仓场景：所有服务代码在同一个仓库
+#   - IDL 集中在 api/idl/ 目录下统一管理
+#
+# 占位符说明：
+#   {repo-root}    - 仓库根目录的磁盘路径（绝对路径）
+#   {project-name} - 逻辑项目名（本仓库为 api）
+#   {service-name} - 服务名（order/pay/user）
+
+workspace: "."
+
+default_team: "api"
+project_name: "api"
+
+# IDL 管理方式：集中式（所有服务 IDL 在 api/idl/ 下统一管理）
+idl_style: "centralized"
+idl_root: "{repo-root}/api/idl"
+
+teams:
+  api:
+    repo_root: "{repo-root}"
+
+modules: {}
+
+services: {}
+
+# IDL 字段冻结状态
+# ⚠️ 以下字段已冻结，禁止修改类型或删除
+idl_frozen_fields: {}
+
+# 影响面分析规则
+impact_analysis:
+  enabled: true
+  auto_detect_upstream: true
+  # 修改 IDL 时，自动检查是否涉及冻结字段
+  check_frozen_fields_on_idl_change: true
