@@ -11,7 +11,7 @@
 
 如果用户没有提供需求标题，询问：
 - 需求标题
-- 需求 ID（如有 TAPD/Jira ID）
+- 需求 ID（如有 Geelib/TAPD/Jira ID）
 - 优先级（P0/P1/P2/P3）
 
 ### Step 2: 加载上下文

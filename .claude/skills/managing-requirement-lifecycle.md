@@ -7,7 +7,7 @@
 
 ## 触发条件
 
-- 用户执行任何 `/requirement:*` 命令时
+- 用户执行任何 `/requirement:*`, `/design:*`, `/coding:*` 命令时
 - Agent 需要推进需求阶段时
 - 门禁检查前后
 
@@ -25,10 +25,12 @@
 ### Step 2: 意图识别
 
 根据用户输入，识别以下意图之一：
-- `NEW`：新建需求
-- `CONTINUE`：恢复上下文继续工作
-- `NEXT`：推进到下一阶段/步骤
-- `GATE_CHECK`：执行门禁检查
+- `NEW_REQ`：新建需求 (`/requirement:new`)
+- `REQ_GATE`：需求门禁检查 (`/requirement:gate-check`)
+- `NEW_DESIGN`：新建设计 (`/design:new`)
+- `DESIGN_GATE`：设计门禁检查 (`/design:gate-check`)
+- `START_CODING`：开始编码 (`/coding:start`)
+- `CODE_REVIEW`：代码审查门禁 (`/coding:review`)
 - `STATUS`：查看当前状态
 
 ### Step 3: 阶段合法性检查
@@ -45,13 +47,12 @@
 
 | 阶段 | 意图 | 调用 |
 |-----|------|------|
-| INIT | NEW | `requirement-bootstrapper` Agent |
-| REQUIREMENT_DEFINING | CONTINUE | `requirement-session-restorer` Skill |
-| REQUIREMENT_DEFINING | GATE_CHECK | `requirement-quality-reviewer` Agent |
-| DESIGNING | NEXT | `outline-design-doc-writer` Skill |
-| DESIGNING | GATE_CHECK | `detail-design-quality-reviewer` Agent |
-| DEV_PREPARING | GATE_CHECK | `dev-entry-gate-checker` Skill |
-| CODING | NEXT | `code-review-preparer` Agent |
+| INIT | NEW_REQ | `requirement-bootstrapper` Agent |
+| REQUIREMENT_DEFINING | REQ_GATE | `requirement-quality-reviewer` Agent |
+| DESIGNING | NEW_DESIGN | `design-doc-writer` Skill |
+| DESIGNING | DESIGN_GATE | `detail-design-quality-reviewer` Agent |
+| CODING | START_CODING | `coding-session-initializer` Skill |
+| CODING | CODE_REVIEW | `code-review-report` Skill |
 
 ### Step 5: 更新状态
 
@@ -63,18 +64,13 @@
 
 ```
 INIT
-  ↓ NEW
+  ↓ NEW_REQ
 REQUIREMENT_DEFINING
-  ↓ [GATE_1 通过]
+  ↓ [GATE_1 需求门禁通过]
 DESIGNING
-  ↓ [GATE_2 通过]
-DEV_PREPARING
-  ↓ [GATE_3 通过]
-  ↓ [GATE_4 通过]
+  ↓ [GATE_2 设计门禁通过]
 CODING
-  ↓ 代码审查通过
-DELIVERING
-  ↓ 验收通过
+  ↓ [GATE_3 代码审查门禁通过]
 DONE
 ```
 

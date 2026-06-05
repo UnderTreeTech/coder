@@ -1,175 +1,47 @@
-# 服务功能开发标准 SOP (Standard Operating Procedure)
+# 团队开发标准 SOP (Standard Operating Procedure)
 
-本文档是基于项目架构和分层模型制定的**服务功能开发标准 SOP**。在进行需求开发（vibe coding）时，AI 和开发者都必须严格按照本规范进行编码实现，确保代码架构一致性、职责分明以及服务正确集成。
+> **核心原则**：各服务代码实现必须遵循本标准套路，严禁 AI 或开发者在没有达成共识的情况下自行发挥。
+>
+> **特别强调：绝不瞎篡改、自创代码规范，具体服务的架构约束完全以其目录下的 `README.md` 为准！**
 
-## 0. 架构分层规范（洋葱模型 / MVC）
+## 1. 架构分层与实现路径
 
-本项目严格遵循标准的洋葱模型，分为以下几层，各层职责界限清晰：
+业务功能的实现必须在设计门禁时确认，编码时严格遵守以下各层级的规范套路（以 `api/user` 架构为范本）：
 
-- **Controller 层 (`internal/server/http/`)**
-  - **职责**：接收 HTTP 请求，解析请求参数（Header, Query, Body），进行基础参数校验，并封装统一的 HTTP Response 返回。
-  - **限制**：不得包含任何核心业务逻辑，仅作数据组装和路由处理。
-- **Service 层 (`internal/service/`)**
-  - **职责**：核心业务逻辑的承载者。负责组合调用多个 DAO 层方法或其他外部 RPC 接口来完成复杂的业务场景。
-  - **限制**：绝对不包含任何与底层协议（HTTP/gRPC）直接相关的代码。
-- **Iface 层 (Interfaces / 接口层)**
-  - **职责**：定义 Service 和 DAO 之间、或内部各模块之间的契约，方便 Mock 测试、依赖注入和层与层之间的解耦。
-- **DAO 层 (`internal/dao/`)**
-  - **职责**：Data Access Object，数据访问层。负责与底层存储（如 MySQL, PostgreSQL, MongoDB, Redis 等）直接交互。
-  - **限制**：必须屏蔽底层存储细节，对上层提供业务友好的数据结构和接口。
+### 1.1 数据访问层 (Model / IFace / DAO)
+底层数据访问层采用接口隔离与依赖注入的设计，**一般情况下通过 `xo` 等组件自动生成**：
+- **Model 层 (`internal/model`)**：定义与数据库表映射的结构体实体。例如 `internal/model/tuser.xo.go`。
+- **IFace 层 (`internal/iface`)**：定义 DAO 层必须实现的接口。例如 `internal/iface/tuser.xo.go`。
+- **DAO 注册与组合 (`internal/dao.go` 等)**：在 DAO 基础文件中，将 `iface` 中定义的各个接口组合进主 `Dao` 结构体/接口中。
+- **DAO 实现层 (`internal/dao`)**：实现 `iface` 定义的接口逻辑，负责具体的 SQL 拼接与数据库交互。例如 `internal/dao/tuser.xo.go`。
+> **AI 约束**：AI 在手写补充 DAO 方法时，必须同步维护 `iface` 的接口定义并在 `dao` 目录下实现，保持模式的一致性。
 
----
+### 1.2 gRPC 接口服务 (gRPC Service)
+- **场景**：服务间的高效内部 RPC 调用。
+- **套路规范**：
+  - **IDL 定义与生成**：在 `api/idl/{service_name}/` 找相应的 proto 文件定义接口，并**必须主动执行** `waterdrop protoc --grpc --swagger *.proto` 生成新的 stub 文件。
+  - **业务实现 (`internal/service`)**：在 `service` 目录下实现 proto 中定义的 RPC 接口。
+    - **实现样板**：强烈建议参考团队统一固化的 [`code-implementation-examples.md`](code-implementation-examples.md) 中的 gRPC 样板代码，严格遵循“入参校验 -> 核心业务逻辑 -> 调用 DAO”的流程。
+  - **服务注册**：在 `internal/server/grpc/server.go` 中将实现类注册到 gRPC Server。
 
-## 1. 服务的开启与关闭 (HTTP vs gRPC)
+### 1.3 HTTP 接口服务 (HTTP Controller)
+- **场景**：直接暴露给前端、第三方或内部基于 HTTP 的通信。
+- **套路规范**：
+  - **1. 路由注册**：在 `internal/server/http/router.go` 中注册 HTTP 路由。
+  - **2. 定义入参/出参 (`http/model`)**：在 `internal/server/http/model/` 目录下（或指定的 http dto 目录），专门定义该接口的 Request 和 Response 结构体，隔离底层模型与外部表现。
+  - **3. Controller 实现 (`http` 目录)**：在 `internal/server/http/{module}.go` 中实现控制器逻辑（如 `http/user.go`）。
+    - 职责：解析 Gin 上下文参数 -> 转换为业务参数 -> 调用 `internal/service` 的逻辑层方法 -> 封装响应返回。
+  - **4. 业务下沉**：Controller 中**严禁写重度业务逻辑或直接调 DAO**，必须将核心业务下沉到 `internal/service` 中的普通 Service 方法中去处理。
 
-项目中默认会在服务入口 `cmd/main.go` 中同时注册 **HTTP** 和 **gRPC** 两种服务，但在**实际生产环境中，通常建议根据微服务职责只开启一种服务**。
+### 1.4 内部普通 Service 方法
+- **场景**：服务内部的公共业务逻辑抽取，供 HTTP Controller、gRPC Service 或定时任务、MQ 消费者调用。
+- **套路规范**：直接在 `internal/service/` 下建立对应的业务文件实现即可，纯 Go 方法，无对外网络协议绑定。
 
-**操作指南**（编辑 `cmd/main.go`）：
-```go
-http := http.New(s)
-rpc := grpc.New(s)
+## 2. 核心红线 (AI 必须遵守)
 
-etcd.Register(context.Background(), rpc.ServiceInfo)
-etcd.Register(context.Background(), http.ServiceInfo)
-```
-- **若仅作为 HTTP 服务**：请将与 `grpc.New(s)` 及其相关的注册、Stop 等代码进行注释或删除。
-- **若仅作为 gRPC 服务**：请将与 `http.New(s)` 及其相关的注册、Stop 等代码进行注释或删除。
+1. **以服务级文档为尊**：`api/{service_name}/README.md` 是该服务的绝对规范源，任何生成代码的结构、命名、分层均需照抄该文档的范式，**不得发明所谓的 biz 层或凭空改造目录结构**。
+2. **规范 IDL 编写**：对于 gRPC 接口，AI 应主动基于 `context/team/protobuf-style-guide.md` 规范给出 proto 变更，必须提示执行 `protoc` 生成代码命令。
+## 3. 代码收尾要求
 
----
-
-## 2. HTTP 接口开发 SOP
-
-当你需要为服务增加一个 HTTP 接口时，请严格按照以下顺序自下而上（或自上而下）进行实现：
-
-### Step 2.1: 实现 DAO 层 (`internal/dao/{entity}.go`)
-直接与数据库交互，实现数据增删改查。
-```go
-package dao
-
-import "context"
-
-func (d *Dao) GetUserByID(ctx context.Context, id string) (*User, error) {
-    var user User
-    // 执行 SQL 查询并将结果映射到实体
-    return &user, nil
-}
-```
-
-### Step 2.2: 实现 Service 层 (`internal/service/{entity}.go`)
-组合 DAO 方法，处理核心业务逻辑，不涉及 HTTP 语义。
-```go
-package service
-
-import "context"
-
-func (s *Service) GetUser(ctx context.Context, id string) (*User, error) {
-    // 业务校验，组合调用 dao
-    return s.dao.GetUserByID(ctx, id)
-}
-```
-
-### Step 2.3: 实现 Controller 及路由挂载 (`internal/server/http/server.go` 或独立 `router.go`)
-解析参数，调用 Service 并响应。
-```go
-// 1. Controller 方法定义
-func getUser(s *service.Service) gin.HandlerFunc {
-    return func(c *gin.Context) {
-        id := c.Query("id")
-        
-        // 调用 Service
-        user, err := s.GetUser(c.Request.Context(), id)
-        if err != nil {
-            c.JSON(500, gin.H{"error": err.Error()}) // 依据团队错误码规范处理
-            return
-        }
-        c.JSON(200, user)
-    }
-}
-
-// 2. 路由注册
-func New(s *service.Service) *Server {
-    engine := gin.Default()
-    engine.GET("/api/v1/user", getUser(s)) // 挂载路由
-    return &Server{engine: engine}
-}
-```
-
----
-
-## 3. gRPC 接口开发 SOP
-
-当你需要为服务增加一个 gRPC 接口时，请严格按照以下步骤进行：
-
-### Step 3.1: 编写 Protobuf 文件 (`api/{version}/{entity}.proto`)
-定义 RPC 服务契约、Request 及 Reply。
-```protobuf
-syntax = "proto3";
-package api.v1;
-option go_package = "{repo}/api/v1;v1"; // 替换为真实包路径
-
-service UserService {
-    rpc GetUser (GetUserRequest) returns (GetUserReply);
-}
-
-message GetUserRequest {
-    string id = 1;
-}
-
-message GetUserReply {
-    string name = 1;
-}
-```
-> **要求**：编写完成后，必须执行 `protoc` (或项目对应的生成命令) 生成对应的 Go 桩代码。
-
-### Step 3.2: Service 层实现 gRPC 接口 (`internal/service/{entity}.go`)
-在 Service 层实现 Protobuf 生成的 `Server` 接口。
-```go
-package service
-
-import (
-    "context"
-    pb "github.com/UnderTreeTech/layout/api/v1" // 引入 pb 包
-)
-
-// 必须实现 pb 定义的 RPC 接口
-func (s *Service) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserReply, error) {
-    // 调用 DAO 层核心逻辑
-    user, err := s.dao.GetUserByID(ctx, req.Id)
-    if err != nil {
-        return nil, err
-    }
-    
-    // 将业务层结构转换为 PB Reply 结构返回
-    return &pb.GetUserReply{
-        Name: user.Name,
-    }, nil
-}
-```
-
-### Step 3.3: gRPC Server 注册 (`internal/server/grpc/server.go`)
-在 gRPC Server 启动入口处，将 Service 实例绑定到 gRPC Server 上。
-```go
-package grpc
-
-import (
-    "google.golang.org/grpc"
-    pb "github.com/UnderTreeTech/layout/api/v1"
-    "github.com/UnderTreeTech/layout/internal/service"
-)
-
-func New(s *service.Service) *Server {
-    srv := grpc.NewServer()
-    // 注册 gRPC 服务
-    pb.RegisterUserServiceServer(srv, s)
-    return &Server{Server: srv}
-}
-```
-
----
-
-## 总结
-
-AI（Claude）在接收到针对本仓库的具体开发任务时：
-1. **优先确认**：当前需求是需要开发 HTTP 接口还是 gRPC 接口，或者仅仅是内部逻辑。
-2. **遵守分层**：任何逻辑变更必须放置在正确的层（Router, Controller, Service, DAO）。不要跨层污染（例如在 DAO 层中解析 gin.Context）。
-3. **闭环验证**：确保新增代码涉及到的 `main.go`、路由注册或 gRPC Server 注册都已经正确就绪。
+1. **自动格式化**：在完成一个功能模块的代码编写后，必须主动执行 `go fmt ./...` 对当前修改的代码进行格式化。
+2. **存根更新**：所有 `.proto` 的变更，必须在代码编写后、提交前，确保执行过生成命令，保证存根与定义一致。

@@ -1,0 +1,439 @@
+// 定义项目 API 的 proto 文件
+// protobuf 文件参考:
+//  - https://developers.google.com/protocol-buffers/
+syntax = "proto3";
+
+package service.user.v1;
+import "google/protobuf/empty.proto";
+
+option go_package = "./;user";
+
+service User {
+  //******************************************************************************//
+  //*****************************组织架构、用户接口**********************************//
+  //******************************************************************************//
+  // AddUserBiz 添加用户业务逻辑：处理用户信息、部门信息
+  rpc AddUserBiz(UserInfoBizReq) returns(BatchGetUidsReply);
+  // UpdateUserBiz 设置用户信息
+  rpc UpdateUserBiz(EditUserInfoBizReq) returns(google.protobuf.Empty);
+  // BatchUpdateUserBiz 批量设置用户信息 内部是异步更新,目前仅开放平台用
+  rpc BatchUpdateUserBiz(BatchEditUserInfoBizReq) returns(google.protobuf.Empty);
+  // GetUserInfo 获取用户信息
+  rpc GetUserInfo(UserInfoReq) returns (UserInfoReply);
+  // BatchGetUserInfos 批量获取用户信息
+  rpc BatchGetUserInfos(UserInfosReq) returns (UserInfos);
+  // BatchDeleteUserInfos 批量删除用户信息
+  rpc BatchDeleteUserInfos(BatchDeleteUserInfosReq) returns (google.protobuf.Empty);
+  // DisableUser 禁用用户
+  rpc DisableUser(BatchUserInfosReq) returns (google.protobuf.Empty);
+  // EnableUser 启用用户
+  rpc EnableUser(BatchUserInfosReq) returns (google.protobuf.Empty);
+  // MoveUserDept 移动用户的部门
+  rpc MoveUserDept(MoveUserDeptReq) returns (MoveUserDeptReply);
+  // DeleteUserBiz 删除用户,以下2种情况:
+  // 1.如果有多职，那么只移除当前部门的职位，组织里仍保留;
+  // 2.如果没有多职，那么从组织里移除用户
+  rpc DeleteUserBiz(DeleteUserBizReq) returns (google.protobuf.Empty);
+}
+
+// RevokeInfo 组织rpc调用公用的调用方信息
+message RevokeInfo {
+  uint64 cid = 1;
+  uint64 operatorId = 2;
+  string ip = 3;
+  int32 from = 4;
+}
+
+message AddUserInfo
+{
+  string    pwd = 1;
+  UserInfo  user_info = 2;
+}
+
+message BatchAddUserInfosReq
+{
+  repeated AddUserInfo add_user_infos = 1;
+}
+
+message UserInfoReq
+{
+  uint64 uid = 1;
+}
+
+message UserInfosReq
+{
+  repeated uint64 uids = 1;
+}
+
+message BatchUserInfosReq
+{
+  uint64 cid = 1;
+  repeated uint64 uids = 2;
+  RevokeInfo revoke_info = 3;
+}
+
+message BatchDeleteUserInfosReq
+{
+  uint64  cid = 1;
+  uint64  operator = 2;
+  repeated  uint64  user_ids = 4;
+  int32 from = 5; // 请求来源，用于清理被删组织数据删人时设置为来自系统，便于删除管理员账号
+}
+
+message UserInfo
+{
+  uint64      cid = 1;
+  uint64      uid = 2;
+  string      user_account = 3;
+  string      user_name = 4;
+  string      en_name = 5;
+  uint32      gender = 6;
+  string      sign = 7;
+  string      email = 8;
+  string      avatar = 9;
+  uint32      birth = 10;
+  string      tel = 11;
+  string      user_desc = 12;
+  string      mobile = 13;
+  uint32      user_status = 14;
+  string      nation = 15;
+  string      province = 16;
+  string      city = 17;
+  string      county = 18;
+  string      address = 19;
+  uint32      init_flag = 20;
+  uint32      show_mask = 21;
+  string      field_show_control = 22;
+  uint32      label = 23;
+  uint32      canbe_chat = 24;
+  repeated uint32 dept_ids = 25;
+  // 自定义角色会有此字段,表示部门范围
+  repeated uint32 manage_dept_ids = 27;
+  uint32      role_id = 29;
+  repeated uint32 role_ids = 30; // 多角色ID列表，支持一人多角色
+  string      staff_id = 31;
+  repeated PosInfo pos_info = 33;
+  repeated UserExtendField extend_fields = 35;
+  uint64 duty_id = 37; // 职位ID
+  uint32 secret_level = 39; // 密级等级
+  uint32 cloud_id = 41; // 云ID
+  string password = 42;
+  string user_source = 43; // 创建来源
+  uint64 created_time = 44;
+  uint64 updated_time = 45;
+}
+
+message UserInfoReply
+{
+  UserInfo user_info = 1;
+}
+
+message UserCorpInfo{
+  uint64      cid = 1;
+  uint64      uid = 2;
+  string      staff_id = 3;
+  uint32      role_id = 4;
+}
+
+message UserCorpInfoReply{
+  UserCorpInfo user_corp_info = 1;
+}
+
+message UserInfos
+{
+  repeated UserInfo user_infos = 1;
+}
+
+message BatchGetUidsReq
+{
+  uint64 cid = 1;
+  repeated uint32 dept_ids = 2;
+}
+
+message BatchGetUidsReply
+{
+  repeated uint64 uids = 1;
+}
+
+message PosInfo
+{
+  uint32 dept_id = 1;
+  uint32 pos_id = 2;
+  string pos_name = 3;
+  string pos_desc = 4;
+  uint32 pos_order = 5;
+  uint64 leader = 6;
+}
+
+message UserPosInfo
+{
+  uint64 uid = 1;
+  repeated PosInfo pos_info = 2;
+}
+
+message DepthInfo
+{
+  repeated PosInfo depth_info = 1;
+}
+
+message UserDepthInfo
+{
+
+}
+
+message BatchOperationUserPosInfos
+{
+  uint64                cid = 1;
+  repeated UserPosInfo  user_pos_infos = 2;
+}
+
+message AddUserPosInfoReq
+{
+  uint64  cid = 1;
+  uint64  uid = 2;
+  PosInfo pos_info = 3;
+}
+
+message BatchAddUserPosInfosReq
+{
+  uint64    cid = 1;
+  uint64    uid = 2;
+  repeated PosInfo pos_infos = 3;
+}
+
+message BatchUserDeptInfosReq
+{
+  uint64    cid = 1;
+  uint64    operator = 2;
+  uint64    uid = 3;
+  repeated  uint32  dept_id = 4;
+}
+
+message BatchDeptUserInfosReq
+{
+  uint64          cid = 1;
+  uint64          operator = 2;
+  uint32          dept_id = 3;
+  repeated uint64 uid = 4;
+}
+
+message BatchGetUsersNotInCorpReq
+{
+  uint64 cid = 1;
+  repeated uint64 uids = 2;
+}
+
+message UserCid
+{
+  uint64 cid = 1;
+  uint64 uid = 2;
+}
+
+message BatchGetUsersNotInCorpReply
+{
+  repeated UserCid users = 1;
+}
+
+message BatchGetUsersInCorpReq
+{
+  uint64 cid = 1;
+  uint64 operator = 2;
+  uint32 status = 3;  // 用户状态 0：禁用， 1：启用
+  uint64 limit = 4; // 数量
+  uint64 offset = 5;  // 偏移量
+  uint32 is_backend = 6;// 内部服务调用不校验用户权限
+}
+
+message BatchGetUsersInCorpReply
+{
+  repeated uint64  user_ids = 1;
+  uint64 total = 2;
+}
+
+message GetExternalContractUcReq
+{
+  uint64 cid = 1;
+  uint64 uid = 2;
+}
+
+message GetExternalContractUcReply
+{
+  uint32 uc = 1;
+}
+
+message GetUserExternalContractInfosReq
+{
+  uint64 cid = 1;
+  uint64 uid = 2;
+  uint32 verify_status = 3;
+  uint32 client_uc = 4;
+  // 是否使用缓存，主要给获取用户信息时用，其他场景不走缓存
+  bool fetch_cache = 5;
+}
+
+message ExternalContractInfos
+{
+  repeated ExternalContractInfo user_infos = 1;
+  uint32 server_uc = 2;
+}
+
+message ExternalContractInfo
+{
+  uint64 user_id = 1;
+  uint64 extern_user_id = 2;
+  uint32 extern_cloud_id = 3;
+  uint32 verify_status = 4;
+  uint64 created_time = 5;
+  uint64 updated_time = 6;
+  UserInfo external_user_info = 7;
+}
+
+message AddExternalContactorReq
+{
+  uint64 uid = 1;
+  uint64 external_uid = 2;
+}
+
+// UserInfoBizReq 创建用户请求
+message UserInfoBizReq {
+  uint64 cid = 1;
+  uint64 operator_uid = 2;
+  uint64 uid = 3;
+  string name = 4;
+  string account = 5;
+  map<string, string> custom_data = 6;
+  repeated uint32 manage_dept_ids = 7; // 自定义角色会有此字段,表示部门范围
+  repeated uint32 dept_ids = 8; // 用户所在的部门
+  repeated PosInfo dept_position = 9; // 用户的职位信息
+  string desp = 10;
+  string email = 11;
+  string en_name = 12;
+  string gender = 13;
+  string mobile = 14;
+  string pwd = 15;
+  uint32 role_id = 16; // 角色
+  string tel = 17;
+  string staff_id = 18;
+  string avatar = 19;
+  UserInfoBizSeniorExecutive senior_executive_data = 20; // 操作用户信息高管参数
+  UserInfoBizTag tag_data = 21; // 操作用户信息标签参数
+  uint32 label = 22; // 用于区分机器人和成员
+  uint64 duty_id = 23; // 职务ID
+  uint32 secret_level = 24; // 密级等级
+  string user_source = 25; // 创建来源
+  string sign = 26; // 用户签名
+  uint32 revoke_src = 27; // 调用来源
+  RevokeInfo revoke_info = 28; // 调用元信息
+  repeated uint32 role_ids = 29;// 多角色字段
+}
+
+// EditUserInfoBizReq 编辑用户请求
+message EditUserInfoBizReq {
+  uint64 cid = 1;
+  uint64 uid = 2;
+  map<string, string> user_info = 3;
+  map<string, string> custom_data = 4;
+  // 用户所在的部门
+  repeated uint32 dept_ids = 5;
+  // 用户的职位信息
+  repeated PosInfo dept_position = 6;
+  // 操作用户信息高管参数
+  UserInfoBizSeniorExecutive senior_executive_data = 7;
+  // 操作用户信息标签参数
+  UserInfoBizTag tag_data = 8;
+  // 操作人
+  uint64 operator = 9;
+  // 调用来源
+  uint32 revoke_src = 10;
+  RevokeInfo revoke_info = 11;
+}
+
+message BatchEditUserInfoBizReq {
+  uint64 cid = 1;
+  repeated uint64 uids = 2;
+  map<string, string> user_info = 3;
+  map<string, string> custom_data = 4;
+  // 用户所在的部门
+  repeated uint32 dept_ids = 5;
+  // 用户的职位信息
+  repeated PosInfo dept_position = 6;
+  // 操作用户信息高管参数
+  UserInfoBizSeniorExecutive senior_executive_data = 7;
+  // 操作用户信息标签参数
+  repeated uint64 tag_ids = 8;
+}
+
+// 操作用户信息高管参数
+message UserInfoBizSeniorExecutive {
+  // 是否是高管
+  uint32 is_senior_executive = 1;
+  // 高管密友列表
+  repeated uint64 senior_executive_white_list = 2;
+}
+
+// 操作用户信息标签参数
+message UserInfoBizTag {
+  repeated uint64 old_tag_ids = 1;
+  repeated uint64 tag_ids = 2;
+}
+
+message UserExtendField{
+  string field_name = 1;
+  string field_value = 2;
+}
+
+message MoveUserDeptReq {
+  uint64  cid = 1;
+  uint64  operator = 2;
+  repeated uint64  user_ids = 3;
+  uint32 from_dept_id = 4;
+  repeated uint32 to_dept_ids = 5;
+  RevokeInfo revoke_info = 6;
+}
+
+message MoveUserDeptReply {
+  uint32 success = 1;
+}
+
+message DeleteUserBizReq {
+  uint64  cid = 1;
+  uint64  operator = 2;
+  repeated uint64  user_ids = 4;
+  uint32 dept_id = 5;
+  uint32 revoke_src = 6; // 调用来源
+  bool has_did = 7; // 是否传了dept_id；当revoke_src为开放平台时此字段有用，一切为了兼容🤣🤣🤣
+  RevokeInfo revoke_info = 8;
+}
+
+message BatchGetUidsByAccountsReq {
+  repeated string accounts = 1;
+}
+
+message BatchGetUidsByAccountsReply {
+  map<uint64, string> uid_account_map = 1;
+}
+
+message GetUserDeptAuthReply {
+  repeated uint32 range_dept = 1;
+}
+
+message GetUserDelInfosReq {
+  uint64 cid = 1;
+  uint64 page = 2;
+  uint64 limit = 3;
+}
+
+message GetUserDelInfosReply {
+  repeated  UserDelInfo del_infos = 1;
+  uint32 total = 2;
+}
+
+message UserDelInfo {
+  uint64 cid = 1;
+  uint64 user_id = 2;
+  string user_account = 3;
+  string user_name = 4;
+  int64 created_time = 5;
+  int64 updated_time = 6;
+}
+

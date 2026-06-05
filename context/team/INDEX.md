@@ -14,7 +14,7 @@ context/team/
 ├── error-code.md               # 错误码空间分配规范
 ├── logging.md                  # 日志规范（级别、字段、格式）
 ├── security.md                 # 安全规范（鉴权、加密、敏感数据）
-├── code-style.md               # 代码风格规范（Go 语言）
+├── protobuf-style-guide.md     # pb定义规范（Go 语言）
 ├── testing.md                  # 测试规范（单测、集成测试覆盖率要求）
 ├── development-sop.md          # 服务功能开发标准 SOP
 └── experience/                 # 团队级踩坑经验（跨项目通用）
@@ -27,6 +27,8 @@ context/team/
 
 | 文件 | 内容 | 适用场景 |
 |-----|------|---------|
+| [`protobuf-style-guide.md`](protobuf-style-guide.md) | gRPC 和 HTTP 接口 Protobuf 定义规范（包名、注释强制要求等） | 设计 API、新增或修改 proto 接口文件 |
+| [`code-implementation-examples.md`](code-implementation-examples.md) | 涵盖 gRPC, HTTP, DAO, Model 的标准代码实现样板 | 新项目初始化、AI 代码生成参考 |
 | [`git-convention.md`](git-convention.md) | 分支命名、提交信息格式、PR 规范 | 创建分支、提交代码、发起 CR |
 | [`error-code.md`](error-code.md) | 错误码空间分配、错误码格式 | 新增错误码、错误处理 |
 | [`logging.md`](logging.md) | 日志级别定义、必填字段、禁止字段 | 添加日志、日志排查 |
