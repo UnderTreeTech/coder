@@ -66,32 +66,29 @@ Harness Engineering 不是让 AI "看起来更聪明"，而是让 AI 在真实�
 
 ---
 
-## 3. 五阶段 + 四门禁流程
+## 3. 三阶段 + 三门禁流程
 
-### 3.1 五阶段主流程
+### 3.1 三阶段主流程
 
 ```
-阶段 1: 初始化     → 目录骨架、上下文加载
-阶段 2: 需求定义 ⭐ → 撰写 → 评审（需求评审门禁）
-阶段 3: 设计 ⭐    → 预研 → 设计 → 评审+追溯（设计门禁）
-阶段 4: 开发 ⭐⭐  → 选择上下文 → 编码 → 审查 → 提交（Dev门禁 + 服务仓库检查门禁）
-阶段 5: 交付       → Done
+阶段 1: 需求定义 ⭐ → 撰写需求 → 评审（需求门禁）
+阶段 2: 拆解设计 ⭐ → 方案与任务拆解 → 评审（设计门禁）
+阶段 3: 编码实现 ⭐ → Vibe Coding 循环 → 审查（代码审查门禁）
 ```
 
-⭐ = 强制门禁（共 4 个，不可跳过）
+⭐ = 强制门禁（共 3 个，不可跳过）
 
 **核心理念：错误越早被拦住，代价越低。**
 
-### 3.2 四道门禁
+### 3.2 三道门禁
 
 门禁口径收拢在 [`context/harness-framework/main-process-numbering.md`](context/harness-framework/main-process-numbering.md)。
 
-| 门禁 | 位置 | 阻塞条件 |
-|-----|------|---------|
-| 需求评审门禁 | 阶段 2.2 | 需求文档不完整 / 验收标准缺失 |
-| 设计门禁 | 阶段 3.3 | 方案漏了关键约束 / 没追溯到需求 |
-| Dev 进入门禁 | 阶段 4.2 | `tasks/features.json` 缺失或不合法 |
-| 服务仓库检查门禁 | 阶段 4.3 | 服务目录不存在 / 分支未就位 |
+| 门禁 | 触发指令 | 阻塞条件概览 |
+|-----|---------|-------------|
+| 需求门禁 | `/requirement:review` | 背景不清晰 / 验收标准缺失 / 影响面未分析 |
+| 设计门禁 | `/design:review` | 漏了约束 / 任务未拆解 / `tasks/features.json` 不合法 |
+| 代码审查门禁 | `/coding:review` | 不符合规范 / 逻辑不符合设计 / 单测未覆盖 |
 
 ---
 
@@ -100,7 +97,7 @@ Harness Engineering 不是让 AI "看起来更聪明"，而是让 AI 在真实�
 | 层级 | 位置 | 范围 | 典型内容 |
 |-----|------|------|---------|
 | 团队级 | `context/team/` | 所有服务必须遵循 | Git 规范、错误码空间、日志规范 |
-| 框架工程级 | `context/harness-framework/` | 所有需求研发必须遵循 | 五阶段流程、门禁规则、文档模板 |
+| 框架工程级 | `context/harness-framework/` | 所有需求研发必须遵循 | 三阶段流程、门禁规则、文档模板 |
 | 服务级 | `context/project/api/{service}/` | 特定服务 | 架构图、API、踩坑经验 |
 
 ---
@@ -160,7 +157,7 @@ LLM 没有跨会话记忆。但团队的每一个"纠正"，都是一次宝贵�
 
 ## 9. 硬规则（不可违反）
 
-1. **不跳过门禁**：四道门禁是强制的
+1. **不跳过门禁**：三道门禁是强制的
 2. **不硬编码路径**：所有路径使用占位符
 3. **不口头通过**：门禁结论必须写入文件
 4. **不散落聊天**：需求、设计、经验必须沉淀到对应目录
@@ -179,9 +176,15 @@ LLM 没有跨会话记忆。但团队的每一个"纠正"，都是一次宝贵�
 | 命令 | 说明 | 示例 |
 |-----|------|------|
 | `/requirement:new` | 新建需求，创建标准目录骨架和需求文档 | `/requirement:new 用户续费功能优化` |
-| `/requirement:continue` | 恢复上一次的需求上下文，继续工作 | `/requirement:continue` |
-| `/requirement:next` | 推进到下一阶段（自动检查门禁） | `/requirement:next` |
-| `/requirement:gate-check` | 当前阶段门禁自检，输出通过/不通过 | `/requirement:gate-check` |
+| `/requirement:write` | 使用外部产品文档 MCP 填充拆解需求 | `/requirement:write` |
+| `/requirement:review` | 触发需求阶段门禁自检，生成检查结论 | `/requirement:review` |
+
+#### 设计管理命令
+
+| 命令 | 说明 | 示例 |
+|-----|------|------|
+| `/design:new` | 新建设计方案 | `/design:new` |
+| `/design:review` | 触发设计阶段门禁检查 | `/design:review` |
 
 #### 服务管理命令
 
@@ -192,10 +195,12 @@ LLM 没有跨会话记忆。但团队的每一个"纠正"，都是一次宝贵�
 | `/service:offboard` | **下线服务**：清理 Harness 制品（知识库/服务矩阵/依赖图） | `/service:offboard chat` |
 | `/service:deps` | 查看服务依赖关系和影响面 | `/service:deps order` |
 
-#### 代码审查命令
+#### 编码与审查命令
 
 | 命令 | 说明 | 示例 |
 |-----|------|------|
+| `/coding:start` | 开始编码循环 | `/coding:start` |
+| `/coding:review` | 触发代码审查门禁 | `/coding:review` |
 | `/agentic:code-review` | 触发 8 维度并行代码审查 | `/agentic:code-review` |
 
 #### 知识沉淀命令
@@ -251,25 +256,28 @@ cd api && waterdrop new chat
 # 1. 新建需求
 /requirement:new 某某功能需求
 
-# 2. 撰写需求文档（AI 辅助填写模板）
-# 编辑 requirements/{req-id}/requirement.md
+# 2. 撰写需求文档（执行 /requirement:write 或手动补全）
+# 生成并编辑 requirements/{req-id}/requirement.md
 
-# 3. 需求评审门禁
-/requirement:gate-check
+# 3. 需求门禁
+/requirement:review
 
-# 4. 进入设计阶段
-/requirement:next
+# 4. 新建设计方案
+/design:new
 
-# 5. 设计完成后门禁检查
-/requirement:gate-check
+# 5. 撰写设计方案和任务拆解
+# 生成 tasks/features.json 等
 
-# 6. 进入开发阶段
-/requirement:next
+# 6. 设计门禁
+/design:review
 
-# 7. 编码完成后代码审查
-/agentic:code-review
+# 7. 开始编码循环
+/coding:start
 
-# 8. 交付后沉淀经验
+# 8. 编码完成后代码审查门禁
+/coding:review
+
+# 9. 交付后沉淀经验
 /knowledge:extract-experience
 ```
 

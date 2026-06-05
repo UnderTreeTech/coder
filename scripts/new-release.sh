@@ -18,7 +18,7 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-TEMPLATE_DIR="$PROJECT_ROOT/releases/_template"
+TEMPLATE_DIR="$PROJECT_ROOT/releases/template"
 TARGET_DIR="$PROJECT_ROOT/releases/$VERSION"
 
 if [[ -d "$TARGET_DIR" ]]; then

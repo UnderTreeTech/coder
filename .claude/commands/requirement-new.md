@@ -62,9 +62,9 @@ requirements/{requirement-id}/
 ✅ 需求目录已创建：requirements/{requirement-id}/
 
 📝 下一步：
-1. 填写 requirements/{requirement-id}/requirement.md 中的需求内容
-2. 完成后运行 /requirement:gate-check 进行需求评审门禁检查
-3. 通过后运行 /requirement:next 进入设计阶段
+1. 运行 `/requirement:write` 命令基于 MCP 服务或文档自动拆解填写需求，或手动编辑 `requirements/{requirement-id}/requirement.md` 中的需求内容
+2. 完成后运行 `/requirement:review` 进行需求评审门禁检查
+3. 通过后运行 `/design:new` 进入设计阶段
 
 💡 提示：
 - 影响面分析请参考 .service-matrix/dependencies.yaml

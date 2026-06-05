@@ -99,8 +99,8 @@ check_file "context/team/logging.md" "日志规范"
 check_file ".service-matrix/dependencies.yaml" "服务矩阵"
 check_file "requirements/INDEX.md" "需求目录"
 check_file "releases/INDEX.md" "版本管理目录"
-check_file "releases/_template/RELEASE_NOTES.md" "版本说明模板"
-check_file "releases/_template/checklist.md" "发布检查清单模板"
+check_file "releases/template/RELEASE_NOTES.md" "版本说明模板"
+check_file "releases/template/checklist.md" "发布检查清单模板"
 
 # ============================================================
 # Step 3: 初始化本地配置（非 validate-only 模式）

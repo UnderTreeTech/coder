@@ -1,7 +1,7 @@
 # Agent: requirement-quality-reviewer
 
 > **定位**：需求评审专家，负责门禁 1（需求评审门禁）的执行。
-> **触发**：阶段 2.3，用户执行 `/requirement:gate-check` 或 AI 判断需求文档已初稿完成时。
+> **触发**：阶段 2.3，用户执行 `/requirement:review` 或 AI 判断需求文档已初稿完成时。
 
 ---
 

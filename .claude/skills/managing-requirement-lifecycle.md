@@ -26,9 +26,9 @@
 
 根据用户输入，识别以下意图之一：
 - `NEW_REQ`：新建需求 (`/requirement:new`)
-- `REQ_GATE`：需求门禁检查 (`/requirement:gate-check`)
+- `REQ_GATE`：需求门禁检查 (`/requirement:review`)
 - `NEW_DESIGN`：新建设计 (`/design:new`)
-- `DESIGN_GATE`：设计门禁检查 (`/design:gate-check`)
+- `DESIGN_GATE`：设计门禁检查 (`/design:review`)
 - `START_CODING`：开始编码 (`/coding:start`)
 - `CODE_REVIEW`：代码审查门禁 (`/coding:review`)
 - `STATUS`：查看当前状态

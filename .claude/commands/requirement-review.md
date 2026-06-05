@@ -4,7 +4,7 @@
 执行需求阶段门禁检查。
 
 ## 触发条件
-用户输入 `/requirement:gate-check`。
+用户输入 `/requirement:review`。
 
 ## 执行动作
 1. 加载当前活动的 requirement id（可从 `.harness/local.yaml` 或询问用户获得）。

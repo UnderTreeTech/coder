@@ -30,7 +30,7 @@ releases/
 │       │   └── {序号}-{描述}.sh
 │       └── rollback/                 # 回滚脚本
 │           └── {序号}-{描述}.sh
-└── _template/                        # 版本目录模板
+└── template/                        # 版本目录模板
     ├── RELEASE_NOTES.md
     ├── checklist.md
     ├── sql/
@@ -177,7 +177,7 @@ echo "✅ 完成：{操作描述}"
 ```bash
 # 创建新版本目录
 VERSION="v1.0.0"
-cp -r releases/_template releases/${VERSION}
+cp -r releases/template releases/${VERSION}
 
 # 或使用脚本
 bash scripts/new-release.sh v1.0.0

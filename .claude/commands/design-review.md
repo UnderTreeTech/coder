@@ -4,7 +4,7 @@
 执行设计阶段门禁检查。
 
 ## 触发条件
-用户输入 `/design:gate-check`。
+用户输入 `/design:review`。
 
 ## 执行动作
 1. 加载当前活动的 requirement id。

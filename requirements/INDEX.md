@@ -71,5 +71,5 @@ requirements/
 /requirement:next
 
 # 门禁自检
-/requirement:gate-check
+/requirement:review
 ```

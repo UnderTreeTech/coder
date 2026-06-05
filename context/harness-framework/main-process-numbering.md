@@ -12,14 +12,14 @@
 阶段 1: 需求定义 ⭐ [需求门禁]
     └── 1.1 需求录入（/requirement:new）
     └── 1.2 需求撰写（AI 补齐背景、目标、验收标准）
-    └── 1.3 ⭐ 需求门禁（/requirement:gate-check）
+    └── 1.3 ⭐ 需求门禁（/requirement:review）
 
          ↓
 
 阶段 2: 拆解设计 ⭐ [设计门禁]
     └── 2.1 方案设计（/design:new）
     └── 2.2 任务拆解（生成 tasks/features.json）
-    └── 2.3 ⭐ 设计门禁（/design:gate-check）
+    └── 2.3 ⭐ 设计门禁（/design:review）
 
          ↓
 
@@ -35,7 +35,7 @@
 
 ### ⭐ 门禁 1：需求门禁（阶段 1.3）
 
-**触发指令**：`/requirement:gate-check`
+**触发指令**：`/requirement:review`
 **触发时机**：需求文档初稿完成后
 
 **阻塞条件**（任一不满足则阻塞）：
@@ -49,7 +49,7 @@
 
 ### ⭐ 门禁 2：设计门禁（阶段 2.3）
 
-**触发指令**：`/design:gate-check`
+**触发指令**：`/design:review`
 **触发时机**：方案设计与任务拆解完成后
 
 **阻塞条件**（任一不满足则阻塞）：
